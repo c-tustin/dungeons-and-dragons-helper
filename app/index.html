@@ -1,0 +1,1048 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D&amp;D Helper</title>
+<style>
+:root{
+  --bg:#17141f; --panel:#221d2c; --panel2:#2b2538; --line:#3a3249; --text:#ece6f5; --muted:#a59cb5;
+  --accent:#e0a64b; --accent2:#b86b2a; --ok:#5fb37a; --bad:#d9594c; --hl:rgba(255,196,0,.45);
+  --radius:10px; --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 var(--font)}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);margin:0;flex:none}
+textarea{resize:vertical;min-height:90px}
+small{color:var(--muted);font-weight:400}
+h3{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:#1b1408;border-color:var(--accent);font-weight:600}
+.btn.danger{color:#ffb4ab}.btn.ok{color:#a8e3b8}
+.btn.small{padding:3px 8px;font-size:12px}
+.btn:disabled{opacity:.4;cursor:default}
+
+header{position:sticky;top:0;z-index:20;background:rgba(23,20,31,.95);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.bar{max-width:1280px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{font-weight:700;font-size:17px;letter-spacing:.02em}
+.logo span{color:var(--accent)}
+nav{display:flex;gap:4px}
+nav button{background:none;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--muted);font-weight:600}
+nav button.active{background:var(--panel2);color:var(--text)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-left:auto}
+.seg button{background:none;border:none;padding:6px 10px;cursor:pointer;color:var(--muted);font-size:13px}
+.seg button.on{background:var(--accent);color:#1b1408;font-weight:600}
+main{max-width:1280px;margin:0 auto;padding:16px}
+.tab{display:none}.tab.active{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+
+/* Dice */
+.dice-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px}
+.dice-btns{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;margin:12px 0}
+.die{aspect-ratio:1;background:var(--panel2);border:1px solid var(--line);border-radius:12px;cursor:pointer;font-weight:700;font-size:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:transform .08s}
+.die:hover{border-color:var(--accent);color:var(--accent)}
+.die:active{transform:scale(.95)}
+.die svg{width:30px;height:30px;opacity:.8}
+.steppers{display:flex;gap:16px;flex-wrap:wrap}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper label{color:var(--muted);margin-right:4px}
+.stepper input{width:64px;text-align:center}
+.expr{display:flex;gap:8px;margin-top:6px}
+.result{text-align:center;padding:18px 10px}
+.result .total{font-size:64px;font-weight:800;line-height:1.1;color:var(--accent)}
+.result .label{color:var(--muted)}
+.result.crit .total{color:var(--ok)} .result.fumble .total{color:var(--bad)}
+.breakdown{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--muted);margin-top:6px;word-break:break-word}
+.d{display:inline-block;min-width:20px;padding:0 3px;margin:1px;border-radius:4px;background:var(--panel2);color:var(--text)}
+.d.max{color:#8fe0a6}.d.min{color:#ff9d92}.d.drop{text-decoration:line-through;opacity:.45}
+.history{max-height:420px;overflow:auto;margin:0;padding:0;list-style:none}
+.history li{display:flex;gap:10px;align-items:baseline;padding:7px 4px;border-bottom:1px solid var(--line)}
+.history .t{font-weight:700;font-size:18px;min-width:44px;text-align:right;color:var(--accent)}
+.history .info{flex:1;min-width:0}
+.history .info div:first-child{font-weight:600}
+.history time{color:var(--muted);font-size:12px}
+.stats-out{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.stats-out span{background:var(--panel2);border-radius:6px;padding:4px 10px;font-weight:700}
+
+/* Character */
+.char-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.char-bar select{width:auto;min-width:200px}
+.char-head{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:3px}
+.field.big{grid-column:span 2}
+.char-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.abilities{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.ability{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 6px;text-align:center}
+.ab-name{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.ab-mod{display:block;width:100%;background:none;border:none;font-size:24px;font-weight:800;cursor:pointer;padding:2px 0}
+.ab-mod:hover{color:var(--accent)}
+.ab-score{width:56px;text-align:center;padding:2px;margin:0 auto;display:block}
+.row-stat{display:flex;justify-content:space-between;align-items:center;padding:6px 2px;border-top:1px solid var(--line)}
+.line{display:flex;align-items:center;gap:8px;padding:3px 0}
+.lname{flex:1}
+.pill{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:1px 10px;min-width:44px;cursor:pointer;font-weight:700}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+.prof{width:16px;height:16px;border-radius:50%;border:2px solid var(--muted);background:none;cursor:pointer;padding:0;flex:none}
+.prof.p1{background:var(--accent);border-color:var(--accent)}
+.prof.p2{background:var(--accent);border-color:#fff;box-shadow:0 0 0 2px var(--accent)}
+.combat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.combat .box{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px}
+.combat input{text-align:center;font-size:20px;font-weight:700;padding:2px}
+.combat .pill{font-size:20px;padding:2px 10px;margin-top:2px}
+.hp-row{display:flex;gap:8px;align-items:end;margin-bottom:8px}
+.hp-row .field{flex:1}
+.hpbar{height:8px;background:var(--bg);border-radius:99px;overflow:hidden;margin:4px 0 10px}
+#hpfill{height:100%;background:var(--ok);transition:width .2s}
+.hp-adj{display:flex;gap:6px;margin-bottom:12px}
+.hp-adj input{width:90px}
+.death{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.death b{font-size:12px;color:var(--muted);margin:0 4px 0 8px}
+.listrow{display:grid;grid-template-columns:1.4fr .6fr 1.4fr auto;gap:6px;align-items:center;margin-bottom:6px}
+.listrow input{padding:4px 6px}
+.listrow .acts{display:flex;gap:4px}
+.res-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.res-row .rname{flex:1 1 120px}
+.res-row input.num{width:52px;text-align:center;padding:4px}
+.res-row select{width:auto;padding:4px}
+.pips{display:flex;gap:4px;flex-wrap:wrap}
+.pip{width:18px;height:18px;border-radius:50%;border:2px solid var(--accent);background:var(--accent);cursor:pointer;padding:0}
+.pip.used{background:none;opacity:.6}
+.rest{display:flex;gap:6px;margin-top:10px}
+.x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px}
+.x:hover{color:var(--bad)}
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.notes-grid .card{margin:0}
+.char-top{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;align-items:start;margin-bottom:14px}
+.char-top .card{margin:0}
+.char-head{align-content:start}
+.portrait{padding:10px}
+.pimg{width:100%;aspect-ratio:300/380;object-fit:cover;border-radius:8px;background:var(--bg);display:block}
+.pimg.sketch{object-fit:contain;background:#fff}
+.pempty{display:flex;align-items:center;justify-content:center;color:var(--muted);border:2px dashed var(--line)}
+.pbtns{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.coins{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;text-align:center}
+.coins input{text-align:center}
+
+/* Library */
+.lib-layout{display:grid;grid-template-columns:320px minmax(0,1fr);gap:14px;align-items:start}
+.drop{border:2px dashed var(--line);border-radius:var(--radius);padding:18px;text-align:center;color:var(--muted);cursor:pointer}
+.drop:hover,.drop.over{border-color:var(--accent);color:var(--text)}
+.book{padding:10px;border:1px solid var(--line);border-radius:8px;margin-top:10px;background:var(--panel2)}
+.book .bname{font-weight:600;word-break:break-word}
+.book .meta{font-size:12px;color:var(--muted)}
+.book .acts{display:flex;gap:6px;margin-top:8px}
+.prog{height:6px;background:var(--bg);border-radius:99px;overflow:hidden;margin-top:6px}
+.prog div{height:100%;background:var(--accent);width:0}
+.searchbar{display:flex;gap:8px}
+.searchbar input{font-size:16px;padding:10px 12px}
+.searchbar select{width:auto;max-width:220px}
+.hint{color:var(--muted);font-size:12px;margin-top:6px}
+.results{margin-top:10px}
+.res{padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;cursor:pointer;background:var(--panel)}
+.res:hover{border-color:var(--accent)}
+.res .rh{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);margin-bottom:4px}
+.res .rh b{color:var(--text)}
+.res .snip{color:#d9d2e6}
+mark{background:var(--hl);color:#fff;border-radius:2px;padding:0 1px}
+.empty{color:var(--muted);text-align:center;padding:30px}
+
+/* Viewer */
+#viewer{position:fixed;inset:0;z-index:50;background:#0e0c13;display:none;flex-direction:column}
+#viewer.open{display:flex}
+.vbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.vbar .vtitle{font-weight:600;flex:1;min-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vbar input.pg{width:64px;text-align:center}
+.vbar .find{display:flex;gap:4px;align-items:center}
+.vbar .find input{width:180px}
+#vscroll{flex:1;overflow:auto;padding:16px;display:flex;justify-content:center}
+#pagebox{position:relative;background:#fff;box-shadow:0 4px 30px rgba(0,0,0,.5);flex:none;margin:auto}
+#pagebox canvas{display:block}
+.vstatus{color:var(--muted);align-self:center}
+.textLayer{position:absolute;inset:0;overflow:hidden;line-height:1;text-align:initial;-webkit-text-size-adjust:none;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;z-index:2}
+.textLayer span,.textLayer br{color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%}
+.textLayer span.hl{background:var(--hl);border-radius:2px}
+.textLayer ::selection{background:rgba(0,110,255,.35)}
+
+/* Toast */
+#toasts{position:fixed;right:16px;bottom:16px;z-index:60;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
+.toast{background:var(--panel2);border:1px solid var(--accent);border-radius:10px;padding:10px 14px;min-width:200px;max-width:340px;box-shadow:0 8px 24px rgba(0,0,0,.4);animation:pop .15s ease-out}
+.toast .tt{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.toast .tv{font-size:28px;font-weight:800;color:var(--accent)}
+.toast.crit .tv{color:var(--ok)}.toast.fumble .tv{color:var(--bad)}
+.toast.msg{border-color:var(--line)}
+@keyframes pop{from{transform:translateY(8px);opacity:0}}
+
+@media (max-width:1000px){
+  .char-grid{grid-template-columns:1fr 1fr}
+  .lib-layout,.dice-layout{grid-template-columns:1fr}
+}
+@media (max-width:680px){
+  .char-grid{grid-template-columns:1fr}
+  .seg{margin-left:0}
+  .field.big{grid-column:span 1}
+  .char-top{grid-template-columns:1fr}
+  .portrait .pimg{max-width:240px;margin:0 auto}
+}
+</style>
+<script src="lib/pdf.min.js"></script>
+<script src="party/party.js"></script><!-- optional, local-only -->
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo">⚔ D&amp;D <span>Helper</span></div>
+    <nav>
+      <button data-tab="dice" class="active">Dice</button>
+      <button data-tab="char">Character</button>
+      <button data-tab="lib">Library</button>
+    </nav>
+    <div class="seg" id="mode" title="Applies to every d20 roll in the app">
+      <button data-mode="dis">Disadvantage</button>
+      <button data-mode="" class="on">Normal</button>
+      <button data-mode="adv">Advantage</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ============ DICE ============ -->
+  <section class="tab active" id="tab-dice">
+    <div class="dice-layout">
+      <div>
+        <div class="card">
+          <h3>Roll</h3>
+          <div class="steppers">
+            <div class="stepper"><label>Number of dice</label><button class="btn small" data-step="qty:-1">−</button><input id="qty" type="number" min="1" max="100" value="1"><button class="btn small" data-step="qty:1">+</button></div>
+            <div class="stepper"><label>Modifier</label><button class="btn small" data-step="modi:-1">−</button><input id="modi" type="number" value="0"><button class="btn small" data-step="modi:1">+</button></div>
+          </div>
+          <div class="dice-btns" id="dice-btns"></div>
+          <div class="field"><label>Custom roll (e.g. 2d6+3, 1d20+5, 8d6, 4d6kh3)</label>
+            <div class="expr"><input id="expr" placeholder="2d8+1d6+4" autocomplete="off"><button class="btn primary" id="expr-roll">Roll</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Ability scores generator</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn" id="stats-roll">Roll 4d6, drop lowest ×6</button>
+            <span class="hint" style="margin:0">Standard array: 15, 14, 13, 12, 10, 8</span>
+          </div>
+          <div class="stats-out" id="stats-out"></div>
+        </div>
+      </div>
+      <div>
+        <div class="card result" id="result">
+          <div class="label" id="res-label">Pick a die to roll</div>
+          <div class="total" id="res-total">—</div>
+          <div class="breakdown" id="res-break"></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">History</h3><button class="btn small" id="hist-clear">Clear</button></div>
+          <ul class="history" id="history"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHARACTER ============ -->
+  <section class="tab" id="tab-char">
+    <div class="char-bar">
+      <select id="char-select"></select>
+      <button class="btn" id="char-new">+ New</button>
+      <button class="btn" id="char-export">Export</button>
+      <button class="btn" id="char-import">Import</button>
+      <button class="btn danger" id="char-del">Delete</button>
+      <input type="file" id="char-file" accept=".json,application/json" hidden>
+      <input type="file" id="portrait-file" accept="image/*" hidden>
+      <span class="hint" style="margin:0 0 0 auto">Changes save automatically · click any +bonus to roll it</span>
+    </div>
+    <div id="char-sheet"></div>
+  </section>
+
+  <!-- ============ LIBRARY ============ -->
+  <section class="tab" id="tab-lib">
+    <div class="lib-layout">
+      <div class="card">
+        <h3>Books</h3>
+        <div class="drop" id="drop">📚 Drop PDFs here or <u>click to upload</u></div>
+        <input type="file" id="book-file" accept="application/pdf,.pdf" multiple hidden>
+        <div id="books"></div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="searchbar">
+            <input id="q" placeholder="Search your books… (e.g. fireball, &quot;opportunity attack&quot;)" autocomplete="off">
+            <select id="q-book"><option value="">All books</option></select>
+          </div>
+          <div class="hint">All words must appear on the page · use "quotes" for an exact phrase · click a result to open that page</div>
+        </div>
+        <div class="results" id="results"><div class="empty">Upload a book, then search it here.</div></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- PDF viewer -->
+<div id="viewer">
+  <div class="vbar">
+    <button class="btn" id="v-close">✕ Close</button>
+    <div class="vtitle" id="v-title"></div>
+    <button class="btn" id="v-prev">◀</button>
+    <input class="pg" id="v-page" type="number" min="1"><span class="vstatus" id="v-count"></span>
+    <button class="btn" id="v-next">▶</button>
+    <button class="btn" id="v-zout">−</button><button class="btn" id="v-zin">+</button>
+    <div class="find"><input id="v-find" placeholder="Find in this book"><button class="btn" id="v-fprev">↑</button><button class="btn" id="v-fnext">↓</button><span class="vstatus" id="v-fstat"></span></div>
+  </div>
+  <div id="vscroll"><div id="pagebox"></div></div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+'use strict';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => (n >= 0 ? '+' : '') + n;
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { console.warn(e); } }
+};
+function toastMsg(text) {
+  const el = document.createElement('div');
+  el.className = 'toast msg'; el.textContent = text;
+  $('#toasts').append(el); setTimeout(() => el.remove(), 3500);
+}
+
+/* ---------- tabs & mode ---------- */
+function showTab(name) {
+  $$('nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  $$('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
+  store.set('dd.tab', name);
+}
+$$('nav button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+let rollMode = '';
+$$('#mode button').forEach(b => b.onclick = () => {
+  rollMode = b.dataset.mode;
+  $$('#mode button').forEach(x => x.classList.toggle('on', x === b));
+});
+
+/* =====================================================
+   DICE
+   ===================================================== */
+function rollDie(sides) {
+  const a = new Uint32Array(1), lim = Math.floor(0x100000000 / sides) * sides;
+  do crypto.getRandomValues(a); while (a[0] >= lim);
+  return (a[0] % sides) + 1;
+}
+function roll(expr, mode = rollMode) {
+  const src = String(expr).replace(/\s+/g, '').toLowerCase();
+  if (!src) throw new Error('Nothing to roll');
+  const re = /([+-]?)(?:(\d*)d(\d+|%)(?:(kh|kl|k)(\d+))?|(\d+))/y;
+  let pos = 0, total = 0, parts = [], crit = false, fumble = false;
+  while (pos < src.length) {
+    re.lastIndex = pos;
+    const m = re.exec(src);
+    if (!m || m[0] === '') throw new Error(`Can't read "${src.slice(pos)}"`);
+    pos = re.lastIndex;
+    const sign = m[1] === '-' ? -1 : 1;
+    if (m[6] !== undefined) { total += sign * +m[6]; parts.push({ sign, value: +m[6] }); continue; }
+    let n = m[2] === '' ? 1 : +m[2];
+    const sides = m[3] === '%' ? 100 : +m[3];
+    if (n < 1 || n > 500 || sides < 2 || sides > 1000) throw new Error('That is a lot of dice');
+    let keep = null, high = true, adv = null;
+    if (m[4]) { keep = +m[5]; high = m[4] !== 'kl'; }
+    if (mode && sides === 20 && n === 1 && !m[4]) { n = 2; keep = 1; high = mode === 'adv'; adv = mode; }
+    const dice = Array.from({ length: n }, () => ({ v: rollDie(sides), kept: true }));
+    if (keep !== null && keep < n) {
+      [...dice].sort((a, b) => high ? b.v - a.v : a.v - b.v).slice(keep).forEach(d => d.kept = false);
+    }
+    const kept = dice.filter(d => d.kept);
+    const sum = kept.reduce((a, d) => a + d.v, 0);
+    if (sides === 20 && kept.length === 1) { if (kept[0].v === 20) crit = true; if (kept[0].v === 1) fumble = true; }
+    total += sign * sum;
+    parts.push({ sign, dice, sides, value: sum, adv });
+  }
+  return { total, parts, crit, fumble };
+}
+function breakdownHTML(r) {
+  return r.parts.map((p, i) => {
+    const s = i === 0 ? (p.sign < 0 ? '−' : '') : (p.sign < 0 ? ' − ' : ' + ');
+    if (!p.dice) return s + p.value;
+    const ds = p.dice.map(d => `<span class="d${!d.kept ? ' drop' : ''}${d.v === p.sides ? ' max' : d.v === 1 ? ' min' : ''}">${d.v}</span>`).join('');
+    return `${s}d${p.sides}${p.adv ? (p.adv === 'adv' ? ' adv' : ' dis') : ''}[${ds}]`;
+  }).join('');
+}
+let history = store.get('dd.history', []);
+function doRoll(label, expr, opts = {}) {
+  let r;
+  try { r = roll(expr, opts.noMode ? '' : rollMode); }
+  catch (e) { toastMsg(e.message); return null; }
+  const entry = { label: label || expr, expr, total: r.total, html: breakdownHTML(r), crit: r.crit, fumble: r.fumble, at: Date.now() };
+  history.unshift(entry); history = history.slice(0, 100); store.set('dd.history', history);
+  showResult(entry); renderHistory(); toastRoll(entry);
+  return r;
+}
+function showResult(e) {
+  $('#result').className = 'card result' + (e.crit ? ' crit' : e.fumble ? ' fumble' : '');
+  $('#res-label').textContent = e.label + (e.crit ? ' — natural 20!' : e.fumble ? ' — natural 1' : '');
+  $('#res-total').textContent = e.total;
+  $('#res-break').innerHTML = `${esc(e.expr)} → ${e.html}`;
+}
+function renderHistory() {
+  $('#history').innerHTML = history.map(h => `<li><span class="t">${h.total}</span><div class="info"><div>${esc(h.label)}</div><div class="breakdown" style="margin:0">${h.html}</div></div><time>${new Date(h.at).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</time></li>`).join('') || '<li class="empty" style="display:block">No rolls yet</li>';
+}
+function toastRoll(e) {
+  if ($('#tab-dice').classList.contains('active')) return;
+  const el = document.createElement('div');
+  el.className = 'toast' + (e.crit ? ' crit' : e.fumble ? ' fumble' : '');
+  el.innerHTML = `<div class="tt"><b>${esc(e.label)}</b><span class="tv">${e.total}</span></div><div class="breakdown">${e.html}</div>`;
+  $('#toasts').append(el);
+  setTimeout(() => el.remove(), 5000);
+}
+const DIE_SHAPES = {
+  4: '<polygon points="12,2 22,20 2,20"/>', 6: '<rect x="3" y="3" width="18" height="18" rx="2"/>',
+  8: '<polygon points="12,1 22,12 12,23 2,12"/>', 10: '<polygon points="12,1 22,9 18,22 6,22 2,9"/>',
+  12: '<polygon points="12,1 21,6 23,15 17,23 7,23 1,15 3,6"/>', 20: '<polygon points="12,1 22,6.5 22,17.5 12,23 2,17.5 2,6.5"/>',
+  100: '<circle cx="12" cy="12" r="10"/>'
+};
+$('#dice-btns').innerHTML = [4, 6, 8, 10, 12, 20, 100].map(s =>
+  `<button class="die" data-die="${s}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">${DIE_SHAPES[s]}</svg>d${s}</button>`).join('');
+$$('.die').forEach(b => b.onclick = () => {
+  const n = Math.max(1, Math.min(100, +$('#qty').value || 1)), m = +$('#modi').value || 0;
+  const expr = `${n}d${b.dataset.die}${m ? (m > 0 ? '+' : '') + m : ''}`;
+  doRoll(expr, expr);
+});
+$$('[data-step]').forEach(b => b.onclick = () => {
+  const [id, d] = b.dataset.step.split(':'); const el = $('#' + id);
+  el.value = Math.max(id === 'qty' ? 1 : -99, (+el.value || 0) + +d);
+});
+$('#expr-roll').onclick = () => { const v = $('#expr').value.trim(); if (v) doRoll(v, v); };
+$('#expr').onkeydown = e => { if (e.key === 'Enter') $('#expr-roll').click(); };
+$('#hist-clear').onclick = () => { history = []; store.set('dd.history', history); renderHistory(); };
+$('#stats-roll').onclick = () => {
+  const vals = Array.from({ length: 6 }, () => roll('4d6kh3', '').total);
+  $('#stats-out').innerHTML = vals.map(v => `<span>${v}</span>`).join('') + `<span style="background:none;color:var(--muted);font-weight:400">total ${vals.reduce((a, b) => a + b, 0)}</span>`;
+};
+renderHistory();
+
+/* =====================================================
+   CHARACTER
+   ===================================================== */
+const ABIL = [['str','Strength'],['dex','Dexterity'],['con','Constitution'],['int','Intelligence'],['wis','Wisdom'],['cha','Charisma']];
+const SKILLS = [['Acrobatics','dex'],['Animal Handling','wis'],['Arcana','int'],['Athletics','str'],['Deception','cha'],['History','int'],['Insight','wis'],['Intimidation','cha'],['Investigation','int'],['Medicine','wis'],['Nature','int'],['Perception','wis'],['Performance','cha'],['Persuasion','cha'],['Religion','int'],['Sleight of Hand','dex'],['Stealth','dex'],['Survival','wis']];
+const abMod = s => Math.floor(((+s || 0) - 10) / 2);
+const profBonus = c => Math.ceil(Math.max(1, Math.min(20, +c.level || 1)) / 4) + 1;
+
+function blankChar(name = 'New Adventurer') {
+  return {
+    id: uid('c'), name, player: '', race: '', cls: '', level: 1, background: '', alignment: '', xp: 0,
+    abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+    saveProf: {}, skillProf: {}, inspiration: false,
+    portraitKey: '', portraitView: 'art', portraitImg: '', age: '', height: '', weight: '', eyes: '', skin: '', hair: '',
+    ac: 10, speed: '30 ft', hpMax: 10, hpCur: 10, hpTemp: 0, hitDie: 'd8', hitDiceUsed: 0, deathS: 0, deathF: 0,
+    attacks: [], resources: [], coins: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+    equipment: '', proficiencies: '', features: '', personality: '', ideals: '', bonds: '', flaws: '', appearance: '', spells: '', backstory: '', notes: ''
+  };
+}
+// The party (characters + portraits) lives in party/party.js, a local-only file kept out of the public repo.
+// Without it the app starts with one blank character.
+const PARTY = window.DND_PARTY || { characters: [], portraits: {} };
+const PORTRAITS = PARTY.portraits || {};
+const partyChar = d => Object.assign(blankChar(d.name), JSON.parse(JSON.stringify(d)), { id: uid('c') });
+let chars = store.get('dd.chars', null);
+if (!chars || !chars.list?.length) {
+  const list = PARTY.characters.length ? PARTY.characters.map(partyChar) : [blankChar()];
+  chars = { list, current: list[0].id };
+} else if (PARTY.characters.length && store.get('dd.party', 1) < 2) {
+  // Already had characters: add any missing party members and fill in their appearance info
+  for (const d of PARTY.characters) {
+    const ex = chars.list.find(c => c.name === d.name);
+    if (!ex) { chars.list.push(partyChar(d)); continue; }
+    for (const k of ['portraitKey', 'age', 'height', 'weight', 'eyes', 'skin', 'hair', 'appearance']) if (!ex[k] && d[k]) ex[k] = d[k];
+  }
+}
+if (PARTY.characters.length) store.set('dd.party', 2);
+chars.list = chars.list.map(c => Object.assign(blankChar(), c));
+store.set('dd.chars', chars);
+const cur = () => chars.list.find(c => c.id === chars.current) || chars.list[0];
+const saveChars = () => store.set('dd.chars', chars);
+const getPath = (o, p) => p.split('.').reduce((a, k) => a?.[k], o);
+function setPath(o, p, v) { const ks = p.split('.'); const last = ks.pop(); ks.reduce((a, k) => (a[k] ??= {}), o)[last] = v; }
+
+function sheetHTML() {
+  const f = (label, path, cls = '', type = 'text', extra = '') => `<div class="field ${cls}"><label>${label}</label><input type="${type}" data-f="${path}" ${extra}></div>`;
+  const ta = (label, path, rows = 5) => `<div class="card"><h3>${label}</h3><textarea data-f="${path}" rows="${rows}"></textarea></div>`;
+  return `
+  <div class="char-top">${portraitHTML()}
+  <div class="card char-head">
+    ${f('Character name', 'name', 'big')}${f('Class', 'cls')}${f('Level', 'level', '', 'number', 'min="1" max="20"')}
+    ${f('Race / species', 'race')}${f('Background', 'background')}${f('Alignment', 'alignment')}${f('XP', 'xp', '', 'number', 'min="0"')}${f('Player', 'player')}
+    ${f('Age', 'age')}${f('Height', 'height')}${f('Weight', 'weight')}${f('Eyes', 'eyes')}${f('Skin', 'skin')}${f('Hair', 'hair')}
+  </div></div>
+  <div class="char-grid">
+    <div>
+      <div class="card"><h3>Abilities</h3>
+        <div class="abilities">${ABIL.map(([k, n]) => `<div class="ability"><div class="ab-name">${n}</div><button class="ab-mod" data-roll="check" data-ab="${k}" title="Roll ${n} check" id="mod-${k}"></button><input class="ab-score" type="number" min="1" max="30" data-f="abilities.${k}"></div>`).join('')}</div>
+        <div class="row-stat"><span>Proficiency bonus</span><b id="c-pb"></b></div>
+        <div class="row-stat"><span>Passive Perception</span><b id="c-pp"></b></div>
+        <label class="row-stat"><span>Inspiration</span><input type="checkbox" data-f="inspiration"></label>
+      </div>
+      <div class="card"><h3>Saving throws</h3>
+        ${ABIL.map(([k, n]) => `<div class="line"><input type="checkbox" data-f="saveProf.${k}" title="Proficient"><span class="lname">${n}</span><button class="pill" data-roll="save" data-ab="${k}" id="save-${k}"></button></div>`).join('')}
+      </div>
+      <div class="card"><h3>Coins</h3>
+        <div class="coins">${['cp','sp','ep','gp','pp'].map(c => `<div class="field"><label>${c.toUpperCase()}</label><input type="number" data-f="coins.${c}"></div>`).join('')}</div>
+      </div>
+    </div>
+    <div>
+      <div class="card"><h3>Skills <small>· tap ● for proficient / expertise</small></h3>
+        ${SKILLS.map(([n, a], i) => `<div class="line"><button class="prof" data-skill="${i}" title="Toggle proficiency"></button><span class="lname">${n} <small>${a.toUpperCase()}</small></span><button class="pill" data-roll="skill" data-skill="${i}" id="skill-${i}"></button></div>`).join('')}
+      </div>
+    </div>
+    <div>
+      <div class="card"><h3>Combat</h3>
+        <div class="combat">
+          <div class="box"><div class="ab-name">Armor class</div><input type="number" data-f="ac"></div>
+          <div class="box"><div class="ab-name">Initiative</div><button class="pill" data-roll="init" id="c-init"></button></div>
+          <div class="box"><div class="ab-name">Speed</div><input data-f="speed" style="font-size:16px"></div>
+        </div>
+      </div>
+      <div class="card"><h3>Hit points</h3>
+        <div class="hp-row">${f('Current', 'hpCur', '', 'number')}${f('Max', 'hpMax', '', 'number')}${f('Temp', 'hpTemp', '', 'number', 'min="0"')}</div>
+        <div class="hpbar"><div id="hpfill"></div></div>
+        <div class="hp-adj"><input type="number" id="hp-amt" min="0" placeholder="Amount"><button class="btn danger" id="hp-dmg">Damage</button><button class="btn ok" id="hp-heal">Heal</button></div>
+        <div class="hp-row">${f('Hit die', 'hitDie')}${f('Hit dice used', 'hitDiceUsed', '', 'number', 'min="0"')}<button class="btn" id="hd-spend" title="Roll a hit die + CON and heal">Spend 1</button></div>
+        <div class="death"><span class="ab-name">Death saves</span><b>Successes</b>${[0,1,2].map(n => `<input type="checkbox" data-ds="deathS" data-n="${n}">`).join('')}<b>Failures</b>${[0,1,2].map(n => `<input type="checkbox" data-ds="deathF" data-n="${n}">`).join('')}<button class="btn small" data-roll="death" style="margin-left:auto">Roll</button></div>
+      </div>
+      <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h3>Attacks</h3><button class="btn small" id="atk-add">+ Add</button></div>
+        <div class="listrow" style="color:var(--muted);font-size:11px;text-transform:uppercase"><span>Name</span><span>Bonus</span><span>Damage</span><span></span></div>
+        <div id="attacks"></div>
+      </div>
+      <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h3>Limited uses</h3><button class="btn small" id="res-add">+ Add</button></div>
+        <div id="resources"></div>
+        <div class="rest"><button class="btn" id="rest-short">Short rest</button><button class="btn" id="rest-long">Long rest</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="notes-grid">
+    ${ta('Features & traits', 'features', 10)}${ta('Equipment', 'equipment', 10)}${ta('Proficiencies & languages', 'proficiencies', 5)}
+    ${ta('Personality traits', 'personality', 3)}${ta('Ideals', 'ideals', 3)}${ta('Bonds', 'bonds', 3)}${ta('Flaws', 'flaws', 3)}
+    ${ta('Spells', 'spells', 6)}${ta('Appearance', 'appearance', 3)}${ta('Backstory', 'backstory', 6)}${ta('Session notes', 'notes', 8)}
+  </div>`;
+}
+
+function portraitHTML() {
+  const c = cur(), p = PORTRAITS[c.portraitKey], view = c.portraitView === 'sketch' ? 'sketch' : 'art';
+  const src = c.portraitImg || (p && p[view]);
+  const img = src ? `<img class="pimg${!c.portraitImg && view === 'sketch' ? ' sketch' : ''}" src="${esc(src)}" alt="Portrait of ${esc(c.name)}">`
+                  : `<div class="pimg pempty">No picture yet</div>`;
+  const toggle = p && !c.portraitImg ? `<button class="btn small${view === 'art' ? ' primary' : ''}" data-pview="art">Illustration</button><button class="btn small${view === 'sketch' ? ' primary' : ''}" data-pview="sketch">Sheet sketch</button>` : '';
+  return `<div class="card portrait">${img}<div class="pbtns">${toggle}<button class="btn small" data-pupload="1">${c.portraitImg ? 'Change' : 'Upload'} picture</button>${c.portraitImg ? '<button class="btn small" data-premove="1">Remove</button>' : ''}</div></div>`;
+}
+function refreshPortrait() { $('#char-sheet .portrait').outerHTML = portraitHTML(); }
+$('#portrait-file').onchange = async e => {
+  const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+  try {
+    const bmp = await createImageBitmap(file), max = 480, k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const cv = document.createElement('canvas'); cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
+    cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
+    cur().portraitImg = cv.toDataURL('image/jpeg', 0.85); saveChars(); refreshPortrait();
+  } catch { toastMsg("Couldn't read that image."); }
+};
+function renderCharSelect() {
+  $('#char-select').innerHTML = chars.list.map(c => `<option value="${c.id}" ${c.id === chars.current ? 'selected' : ''}>${esc(c.name || 'Unnamed')}${c.cls ? ' — ' + esc(c.cls) + ' ' + (c.level || '') : ''}</option>`).join('');
+}
+function renderSheet() {
+  $('#char-sheet').innerHTML = sheetHTML();
+  fillInputs(); renderAttacks(); renderResources(); computeSheet();
+}
+function fillInputs() {
+  const c = cur();
+  $$('#char-sheet [data-f]').forEach(el => {
+    const v = getPath(c, el.dataset.f);
+    if (el.type === 'checkbox') el.checked = !!v; else el.value = v ?? '';
+  });
+  $$('[data-ds]').forEach(el => el.checked = +el.dataset.n < (c[el.dataset.ds] || 0));
+}
+function computeSheet() {
+  const c = cur(), pb = profBonus(c), m = k => abMod(c.abilities[k]);
+  $('#c-pb').textContent = fmt(pb);
+  ABIL.forEach(([k]) => {
+    $('#mod-' + k).textContent = fmt(m(k));
+    $('#save-' + k).textContent = fmt(m(k) + (c.saveProf[k] ? pb : 0));
+  });
+  SKILLS.forEach(([n, a], i) => {
+    const p = c.skillProf[n] || 0;
+    $(`.prof[data-skill="${i}"]`).className = 'prof p' + p;
+    $('#skill-' + i).textContent = fmt(m(a) + p * pb);
+  });
+  $('#c-pp').textContent = 10 + m('wis') + (c.skillProf['Perception'] || 0) * pb;
+  $('#c-init').textContent = fmt(m('dex'));
+  const pct = c.hpMax > 0 ? Math.max(0, Math.min(100, (c.hpCur / c.hpMax) * 100)) : 0;
+  $('#hpfill').style.width = pct + '%';
+  $('#hpfill').style.background = pct > 50 ? 'var(--ok)' : pct > 25 ? 'var(--accent)' : 'var(--bad)';
+}
+function renderAttacks() {
+  const c = cur();
+  $('#attacks').innerHTML = c.attacks.map((a, i) => {
+    const canHit = !isNaN(parseInt(a.bonus)) && !/dc/i.test(a.bonus);
+    return `<div class="listrow">
+      <input data-list="attacks" data-i="${i}" data-k="name" value="${esc(a.name)}" placeholder="Weapon">
+      <input data-list="attacks" data-i="${i}" data-k="bonus" value="${esc(a.bonus)}" placeholder="+5">
+      <input data-list="attacks" data-i="${i}" data-k="damage" value="${esc(a.damage)}" placeholder="1d8+3 slashing">
+      <div class="acts"><button class="btn small" data-atk="hit" data-i="${i}" ${canHit ? '' : 'disabled'} title="Attack roll">Hit</button><button class="btn small" data-atk="dmg" data-i="${i}" title="Damage roll">Dmg</button><button class="btn small" data-atk="crit" data-i="${i}" title="Critical hit: dice doubled">Crit</button><button class="x" data-del="attacks" data-i="${i}" title="Remove">×</button></div>
+    </div>`;
+  }).join('') || '<div class="hint">No attacks yet.</div>';
+}
+function renderResources() {
+  const c = cur();
+  $('#resources').innerHTML = c.resources.map((r, i) => `<div class="res-row">
+    <input class="rname" data-list="resources" data-i="${i}" data-k="name" value="${esc(r.name)}" placeholder="Feature">
+    <div class="pips">${Array.from({ length: Math.min(20, +r.max || 0) }, (_, n) => `<button class="pip ${n < r.used ? 'used' : ''}" data-pip="${i}" data-n="${n}" title="Use / restore"></button>`).join('')}</div>
+    <input class="num" type="number" min="0" data-list="resources" data-i="${i}" data-k="max" value="${r.max}" title="Max uses">
+    <select data-list="resources" data-i="${i}" data-k="reset"><option value="short" ${r.reset === 'short' ? 'selected' : ''}>short rest</option><option value="long" ${r.reset !== 'short' ? 'selected' : ''}>long rest</option></select>
+    <button class="x" data-del="resources" data-i="${i}" title="Remove">×</button>
+  </div>`).join('') || '<div class="hint">Track things like Rage, spell slots, or Ki here.</div>';
+}
+
+const sheet = $('#char-sheet');
+sheet.addEventListener('input', e => {
+  const el = e.target, c = cur();
+  if (el.dataset.f) {
+    let v = el.type === 'checkbox' ? el.checked : el.value;
+    if (el.type === 'number') v = el.value === '' ? '' : +el.value;
+    setPath(c, el.dataset.f, v);
+    if (['name', 'cls', 'level'].includes(el.dataset.f)) renderCharSelect();
+  } else if (el.dataset.list) {
+    const item = c[el.dataset.list][+el.dataset.i];
+    item[el.dataset.k] = el.type === 'number' ? +el.value : el.value;
+    if (el.dataset.list === 'resources' && el.dataset.k === 'max') { item.used = Math.min(item.used, item.max); renderResources(); }
+    if (el.dataset.list === 'attacks' && el.dataset.k === 'bonus') {
+      const btn = $(`[data-atk="hit"][data-i="${el.dataset.i}"]`);
+      btn.disabled = isNaN(parseInt(el.value)) || /dc/i.test(el.value);
+    }
+  } else if (el.dataset.ds) {
+    c[el.dataset.ds] = el.checked ? +el.dataset.n + 1 : +el.dataset.n;
+    fillInputs();
+  } else return;
+  saveChars(); computeSheet();
+});
+sheet.addEventListener('change', e => { if (e.target.dataset.list === 'resources' && e.target.dataset.k === 'reset') saveChars(); });
+sheet.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  const c = cur(), pb = profBonus(c), m = k => abMod(c.abilities[k]), nm = c.name ? c.name.split(' ')[0] + ': ' : '';
+  const d20 = (label, bonus) => doRoll(nm + label, `1d20${bonus ? (bonus > 0 ? '+' : '') + bonus : ''}`);
+  const r = t.dataset.roll;
+  if (t.dataset.pview) { c.portraitView = t.dataset.pview; saveChars(); refreshPortrait(); return; }
+  if (t.dataset.pupload) { $('#portrait-file').click(); return; }
+  if (t.dataset.premove) { if (confirm('Remove this picture?')) { c.portraitImg = ''; saveChars(); refreshPortrait(); } return; }
+  if (r === 'check') { const n = ABIL.find(a => a[0] === t.dataset.ab)[1]; d20(n + ' check', m(t.dataset.ab)); }
+  else if (r === 'save') { const k = t.dataset.ab, n = ABIL.find(a => a[0] === k)[1]; d20(n + ' save', m(k) + (c.saveProf[k] ? pb : 0)); }
+  else if (r === 'skill') { const [n, a] = SKILLS[+t.dataset.skill]; d20(n, m(a) + (c.skillProf[n] || 0) * pb); }
+  else if (r === 'init') d20('Initiative', m('dex'));
+  else if (r === 'death') {
+    const res = doRoll(nm + 'Death save', '1d20', { noMode: true }); if (!res) return;
+    if (res.total === 20) { c.hpCur = 1; c.deathS = 0; c.deathF = 0; toastMsg('Natural 20 — back up with 1 HP!'); }
+    else if (res.total === 1) c.deathF = Math.min(3, (c.deathF || 0) + 2);
+    else if (res.total >= 10) c.deathS = Math.min(3, (c.deathS || 0) + 1);
+    else c.deathF = Math.min(3, (c.deathF || 0) + 1);
+    if (c.deathS >= 3) toastMsg('Stable!'); if (c.deathF >= 3) toastMsg('Three failures…');
+    saveChars(); fillInputs(); computeSheet();
+  }
+  else if (t.classList.contains('prof')) {
+    const n = SKILLS[+t.dataset.skill][0]; c.skillProf[n] = ((c.skillProf[n] || 0) + 1) % 3; saveChars(); computeSheet();
+  }
+  else if (t.dataset.atk) {
+    const a = c.attacks[+t.dataset.i];
+    if (t.dataset.atk === 'hit') d20(a.name + ' attack', parseInt(a.bonus));
+    else {
+      const m2 = String(a.damage).match(/^[\sd\d+\-%]+/i);
+      let expr = m2 ? m2[0].replace(/\s+/g, '').replace(/[+-]$/, '') : '';
+      if (!/d/i.test(expr)) { toastMsg('Damage needs dice, like 1d8+3'); return; }
+      const type = String(a.damage).slice(m2[0].length).trim();
+      if (t.dataset.atk === 'crit') expr = expr.replace(/(\d*)d(\d+)/gi, (_, n, s) => `${(+n || 1) * 2}d${s}`);
+      doRoll(`${nm}${a.name} ${t.dataset.atk === 'crit' ? 'CRIT damage' : 'damage'}${type ? ' (' + type + ')' : ''}`, expr);
+    }
+  }
+  else if (t.dataset.del) { c[t.dataset.del].splice(+t.dataset.i, 1); saveChars(); t.dataset.del === 'attacks' ? renderAttacks() : renderResources(); }
+  else if (t.dataset.pip !== undefined) {
+    const res = c.resources[+t.dataset.pip], n = +t.dataset.n;
+    res.used = n < res.used ? n : n + 1; saveChars(); renderResources();
+  }
+  else if (t.id === 'atk-add') { c.attacks.push({ name: '', bonus: '', damage: '' }); saveChars(); renderAttacks(); $$('#attacks input[data-k="name"]').pop().focus(); }
+  else if (t.id === 'res-add') { c.resources.push({ name: '', max: 1, used: 0, reset: 'long' }); saveChars(); renderResources(); $$('#resources input.rname').pop().focus(); }
+  else if (t.id === 'hp-dmg' || t.id === 'hp-heal') {
+    const amt = Math.abs(+$('#hp-amt').value || 0); if (!amt) { $('#hp-amt').focus(); return; }
+    if (t.id === 'hp-dmg') {
+      const fromTemp = Math.min(+c.hpTemp || 0, amt);
+      c.hpTemp = (+c.hpTemp || 0) - fromTemp; c.hpCur = Math.max(0, (+c.hpCur || 0) - (amt - fromTemp));
+      if (c.hpCur === 0) toastMsg(`${c.name || 'You'} drops to 0 HP!`);
+    } else {
+      c.hpCur = Math.min(+c.hpMax || 0, (+c.hpCur || 0) + amt);
+      if (c.hpCur > 0) { c.deathS = 0; c.deathF = 0; }
+    }
+    $('#hp-amt').value = ''; saveChars(); fillInputs(); computeSheet();
+  }
+  else if (t.id === 'hd-spend') {
+    if ((+c.hitDiceUsed || 0) >= (+c.level || 1)) { toastMsg('No hit dice left — take a long rest.'); return; }
+    const die = (String(c.hitDie).match(/d\d+/i) || ['d8'])[0], con = m('con');
+    const res = doRoll(nm + 'Hit die', `1${die}${con ? (con > 0 ? '+' : '') + con : ''}`, { noMode: true }); if (!res) return;
+    c.hitDiceUsed = (+c.hitDiceUsed || 0) + 1;
+    c.hpCur = Math.min(+c.hpMax || 0, (+c.hpCur || 0) + Math.max(0, res.total));
+    saveChars(); fillInputs(); computeSheet();
+  }
+  else if (t.id === 'rest-short') {
+    c.resources.forEach(r => { if (r.reset === 'short') r.used = 0; });
+    saveChars(); renderResources(); toastMsg('Short rest: short-rest uses restored. Spend hit dice to heal.');
+  }
+  else if (t.id === 'rest-long') {
+    c.resources.forEach(r => r.used = 0);
+    c.hpCur = +c.hpMax || 0; c.hpTemp = 0; c.deathS = 0; c.deathF = 0;
+    c.hitDiceUsed = Math.max(0, (+c.hitDiceUsed || 0) - Math.max(1, Math.floor((+c.level || 1) / 2)));
+    saveChars(); fillInputs(); renderResources(); computeSheet(); toastMsg('Long rest: HP and all uses restored.');
+  }
+});
+document.addEventListener('keydown', e => { if (e.target.id === 'hp-amt' && e.key === 'Enter') $('#hp-dmg').click(); });
+
+$('#char-select').onchange = e => { chars.current = e.target.value; saveChars(); renderSheet(); };
+$('#char-new').onclick = () => { const c = blankChar(); chars.list.push(c); chars.current = c.id; saveChars(); renderCharSelect(); renderSheet(); $('[data-f="name"]').select(); };
+$('#char-del').onclick = () => {
+  const c = cur();
+  if (!confirm(`Delete ${c.name || 'this character'}? Export first if you want a backup.`)) return;
+  chars.list = chars.list.filter(x => x.id !== c.id);
+  if (!chars.list.length) chars.list.push(blankChar());
+  chars.current = chars.list[0].id; saveChars(); renderCharSelect(); renderSheet();
+};
+$('#char-export').onclick = () => {
+  const c = cur(), blob = new Blob([JSON.stringify(c, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = (c.name || 'character').replace(/[^\w\- ]+/g, '').trim() + '.json'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('#char-import').onclick = () => $('#char-file').click();
+$('#char-file').onchange = async e => {
+  const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    const c = Object.assign(blankChar(), data, { id: uid('c') });
+    chars.list.push(c); chars.current = c.id; saveChars(); renderCharSelect(); renderSheet(); toastMsg(`Imported ${c.name}`);
+  } catch { toastMsg("That file isn't a character export."); }
+};
+renderCharSelect(); renderSheet();
+
+/* =====================================================
+   LIBRARY  (IndexedDB: books meta, PDF files, page text)
+   ===================================================== */
+const DB = {
+  db: null,
+  open() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('dungeon-desk', 1);
+      r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('books', { keyPath: 'id' }); d.createObjectStore('files'); d.createObjectStore('texts'); };
+      r.onsuccess = () => { this.db = r.result; res(); };
+      r.onerror = () => rej(r.error);
+    });
+  },
+  req(storeName, mode, fn) {
+    return new Promise((res, rej) => {
+      const t = this.db.transaction(storeName, mode), q = fn(t.objectStore(storeName));
+      t.oncomplete = () => res(q.result); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error || new Error('Storage aborted (disk full?)'));
+    });
+  },
+  get(s, k) { return this.req(s, 'readonly', st => st.get(k)); },
+  all(s) { return this.req(s, 'readonly', st => st.getAll()); },
+  put(s, v, k) { return this.req(s, 'readwrite', st => k === undefined ? st.put(v) : st.put(v, k)); },
+  del(s, k) { return this.req(s, 'readwrite', st => st.delete(k)); }
+};
+let books = [];
+const texts = {};       // bookId -> [page text]
+const lowers = {};      // bookId -> [page text, lowercased, all whitespace removed]
+// Many scanned/OCR'd PDFs break words apart ("Hit D ice"), so search ignores spaces entirely.
+const squash = s => s.toLowerCase().replace(/\s+/g, '');
+function origIndex(text, k) { for (let i = 0, c = 0; i < text.length; i++) if (!/\s/.test(text[i])) { if (c === k) return i; c++; } return text.length; }
+const progress = {};    // bookId -> {done, total}
+const lastPage = store.get('dd.lastPage', {});
+
+const fmtSize = b => b > 1e9 ? (b / 1e9).toFixed(1) + ' GB' : b > 1e6 ? (b / 1e6).toFixed(0) + ' MB' : Math.ceil(b / 1e3) + ' KB';
+function renderBooks() {
+  $('#books').innerHTML = books.map(b => {
+    const p = progress[b.id];
+    let status;
+    if (p) status = `Indexing for search… page ${p.done} / ${p.total || '?'}`;
+    else if (!b.indexed) status = '⚠ Not indexed yet';
+    else if (b.noText) status = `${b.pages} pages · ⚠ no searchable text (scanned images?)`;
+    else status = `${b.pages} pages · searchable`;
+    return `<div class="book">
+      <div class="bname">${esc(b.name)}</div>
+      <div class="meta">${status} · ${fmtSize(b.size)}</div>
+      ${p ? `<div class="prog"><div style="width:${p.total ? (p.done / p.total) * 100 : 0}%"></div></div>` : ''}
+      <div class="acts">
+        <button class="btn small primary" data-open="${b.id}">Open${lastPage[b.id] > 1 ? ' (p. ' + lastPage[b.id] + ')' : ''}</button>
+        ${!b.indexed && !p ? `<button class="btn small" data-reindex="${b.id}">Index now</button>` : ''}
+        <button class="btn small danger" data-delbook="${b.id}" ${p ? 'disabled' : ''}>Delete</button>
+      </div></div>`;
+  }).join('') || '<div class="hint" style="margin-top:12px">No books yet. Your PDFs are stored privately in this browser.</div>';
+  const sel = $('#q-book'), v = sel.value;
+  sel.innerHTML = '<option value="">All books</option>' + books.map(b => `<option value="${b.id}">${esc(b.name)}</option>`).join('');
+  sel.value = books.some(b => b.id === v) ? v : '';
+}
+$('#books').addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.open) openBook(t.dataset.open, lastPage[t.dataset.open] || 1);
+  else if (t.dataset.reindex) indexBook(books.find(b => b.id === t.dataset.reindex));
+  else if (t.dataset.delbook) {
+    const b = books.find(x => x.id === t.dataset.delbook);
+    if (!confirm(`Remove "${b.name}" from the library?`)) return;
+    if (viewer.bookId === b.id) closeViewer(true);
+    await DB.del('files', b.id); await DB.del('texts', b.id); await DB.del('books', b.id);
+    books = books.filter(x => x.id !== b.id); delete texts[b.id]; delete lowers[b.id];
+    renderBooks(); runSearch();
+  }
+});
+
+async function addBooks(fileList) {
+  const files = [...fileList].filter(f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf');
+  if (!files.length) { toastMsg('Only PDF files can be added.'); return; }
+  try { await navigator.storage?.persist?.(); } catch {}
+  for (const f of files) {
+    const book = { id: uid('b'), name: f.name.replace(/\.pdf$/i, ''), size: f.size, added: Date.now(), pages: 0, indexed: false };
+    try {
+      await DB.put('files', f, book.id);
+      await DB.put('books', book);
+    } catch (err) { toastMsg(`Couldn't store ${f.name}: ${err?.message || err}`); continue; }
+    books.push(book); renderBooks();
+  }
+  for (const b of books.filter(b => !b.indexed && !progress[b.id])) await indexBook(b);
+}
+function pageText(tc) {
+  let s = '', last = null;
+  for (const it of tc.items) {
+    if (!('str' in it)) continue;
+    const x = it.transform[4], y = it.transform[5], h = Math.hypot(it.transform[2], it.transform[3]) || 10;
+    if (last) {
+      if (Math.abs(y - last.y) > h * 0.5) s += '\n';
+      else if (x - last.end > h * 0.15 && !/\s$/.test(s) && !/^\s/.test(it.str)) s += ' ';
+    }
+    s += it.str;
+    last = { y, end: x + (it.width || 0) };
+    if (it.hasEOL) { s += '\n'; last = null; }
+  }
+  return s.replace(/(\w)-\n(\w)/g, '$1$2').replace(/\s+/g, ' ').replace(/(?<=\b[A-Za-z]) (?=[A-Za-z]\b)/g, '').trim();
+}
+async function indexBook(book) {
+  if (!book || progress[book.id]) return;
+  progress[book.id] = { done: 0, total: 0 }; renderBooks();
+  let url, doc;
+  try {
+    const blob = await DB.get('files', book.id);
+    url = URL.createObjectURL(blob);
+    doc = await pdfjsLib.getDocument({ url }).promise;
+    progress[book.id].total = doc.numPages;
+    const out = [];
+    for (let p = 1; p <= doc.numPages; p++) {
+      const page = await doc.getPage(p);
+      out.push(pageText(await page.getTextContent()));
+      page.cleanup();
+      progress[book.id].done = p;
+      if (p % 4 === 0 || p === doc.numPages) {
+        const bar = $(`#books [data-open="${book.id}"]`)?.closest('.book');
+        if (bar) { bar.querySelector('.prog div').style.width = (p / doc.numPages) * 100 + '%'; bar.querySelector('.meta').textContent = `Indexing for search… page ${p} / ${doc.numPages} · ${fmtSize(book.size)}`; }
+      }
+    }
+    await DB.put('texts', out, book.id);
+    texts[book.id] = out; lowers[book.id] = out.map(squash);
+    book.pages = doc.numPages; book.indexed = true;
+    book.noText = out.reduce((a, t) => a + t.length, 0) < doc.numPages * 20;
+    await DB.put('books', book);
+    toastMsg(`"${book.name}" is ready to search.`);
+  } catch (err) {
+    console.error(err); toastMsg(`Couldn't read "${book.name}": ${err?.message || err}`);
+  } finally {
+    delete progress[book.id];
+    try { doc?.destroy(); } catch {}
+    if (url) URL.revokeObjectURL(url);
+    renderBooks(); runSearch();
+  }
+}
+const drop = $('#drop');
+drop.onclick = () => $('#book-file').click();
+$('#book-file').onchange = e => { addBooks(e.target.files); e.target.value = ''; };
+['dragenter', 'dragover'].forEach(ev => $('#tab-lib').addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => $('#tab-lib').addEventListener(ev, e => { e.preventDefault(); if (ev === 'drop' || !e.relatedTarget) drop.classList.remove('over'); }));
+$('#tab-lib').addEventListener('drop', e => { if (e.dataTransfer?.files?.length) addBooks(e.dataTransfer.files); });
+
+/* ---------- search ---------- */
+function parseQuery(q) {
+  const terms = [];
+  q.toLowerCase().replace(/"([^"]+)"|(\S+)/g, (_, a, b) => { const t = (a || b).replace(/\s+/g, ' ').trim(); if (t) terms.push(t); });
+  return terms;
+}
+function countOcc(hay, n) { let c = 0, i = 0; while ((i = hay.indexOf(n, i)) !== -1) { c++; i += n.length; } return c; }
+function searchPages(terms, bookIds) {
+  terms = terms.map(squash).filter(Boolean);
+  const full = terms.join(''), out = [];
+  for (const id of bookIds) {
+    const L = lowers[id]; if (!L) continue;
+    for (let i = 0; i < L.length; i++) {
+      const page = L[i]; let score = 0, first = -1, ok = true;
+      for (const t of terms) { const idx = page.indexOf(t); if (idx < 0) { ok = false; break; } if (first < 0) first = idx; score += countOcc(page, t); }
+      if (!ok) continue;
+      if (terms.length > 1) { const f = countOcc(page, full); score += f * 5; if (f) first = page.indexOf(full); }
+      out.push({ id, page: i + 1, score, first });
+    }
+  }
+  return out.sort((a, b) => b.score - a.score);
+}
+function highlight(text, terms) {
+  const pat = t => [...squash(t)].map(ch => ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s*');
+  const re = new RegExp('(' + [...terms].sort((a, b) => b.length - a.length).map(pat).join('|') + ')', 'gi');
+  return text.split(re).map((part, i) => i % 2 ? `<mark>${esc(part)}</mark>` : esc(part)).join('');
+}
+let searchTimer;
+function runSearch() {
+  const q = $('#q').value.trim(), el = $('#results');
+  if (!books.length) { el.innerHTML = '<div class="empty">Upload a book, then search it here.</div>'; return; }
+  if (q.length < 2) { el.innerHTML = '<div class="empty">Type at least 2 characters to search.</div>'; return; }
+  const terms = parseQuery(q), only = $('#q-book').value;
+  const ids = only ? [only] : books.map(b => b.id);
+  const hits = searchPages(terms, ids);
+  const indexing = Object.keys(progress).length ? ' <small>(some books still indexing)</small>' : '';
+  if (!hits.length) { el.innerHTML = `<div class="empty">No pages contain ${terms.map(t => '“' + esc(t) + '”').join(' + ')}${indexing}</div>`; return; }
+  const shown = hits.slice(0, 150);
+  el.innerHTML = `<div class="hint" style="margin:0 0 8px">${hits.length} page${hits.length > 1 ? 's' : ''} found${hits.length > shown.length ? ` · showing top ${shown.length}` : ''}${indexing}</div>` +
+    shown.map(h => {
+      const b = books.find(x => x.id === h.id), t = texts[h.id][h.page - 1], at = origIndex(t, h.first);
+      const s = Math.max(0, at - 90), e2 = Math.min(t.length, at + 220);
+      return `<div class="res" data-id="${h.id}" data-page="${h.page}"><div class="rh"><span><b>${esc(b.name)}</b> · page ${h.page}</span><span>${h.score} match${h.score > 1 ? 'es' : ''}</span></div><div class="snip">${s > 0 ? '…' : ''}${highlight(t.slice(s, e2), terms)}${e2 < t.length ? '…' : ''}</div></div>`;
+    }).join('');
+}
+$('#q').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 200); });
+$('#q-book').onchange = runSearch;
+$('#results').addEventListener('click', e => {
+  const r = e.target.closest('.res'); if (!r) return;
+  openBook(r.dataset.id, +r.dataset.page, parseQuery($('#q').value));
+});
+
+/* ---------- viewer ---------- */
+const viewer = { doc: null, bookId: null, url: null, page: 1, zoom: 1, terms: [], seq: 0, task: null };
+async function openBook(id, page = 1, terms = []) {
+  const b = books.find(x => x.id === id); if (!b) return;
+  $('#viewer').classList.add('open'); document.body.style.overflow = 'hidden';
+  $('#v-title').textContent = b.name; viewer.terms = terms;
+  $('#v-find').value = terms.length ? terms.join(' ') : '';
+  $('#v-fstat').textContent = '';
+  if (viewer.bookId !== id) {
+    $('#pagebox').innerHTML = '<div class="empty" style="background:var(--bg);color:var(--muted);padding:40px">Opening…</div>';
+    try { viewer.doc?.destroy(); } catch {}
+    if (viewer.url) URL.revokeObjectURL(viewer.url);
+    viewer.doc = null; viewer.bookId = id;
+    try {
+      const blob = await DB.get('files', id);
+      viewer.url = URL.createObjectURL(blob);
+      viewer.doc = await pdfjsLib.getDocument({ url: viewer.url }).promise;
+    } catch (err) { toastMsg("Couldn't open that PDF: " + (err?.message || err)); closeViewer(true); return; }
+    if (viewer.bookId !== id) return;
+  }
+  $('#v-count').textContent = '/ ' + viewer.doc.numPages;
+  $('#v-page').max = viewer.doc.numPages;
+  goPage(page);
+}
+function closeViewer(unload) {
+  $('#viewer').classList.remove('open'); document.body.style.overflow = '';
+  if (unload) { try { viewer.doc?.destroy(); } catch {} if (viewer.url) URL.revokeObjectURL(viewer.url); viewer.doc = null; viewer.bookId = null; viewer.url = null; }
+  renderBooks();
+}
+function goPage(n) {
+  if (!viewer.doc) return;
+  viewer.page = Math.max(1, Math.min(viewer.doc.numPages, n | 0 || 1));
+  $('#v-page').value = viewer.page;
+  lastPage[viewer.bookId] = viewer.page; store.set('dd.lastPage', lastPage);
+  renderPage();
+}
+async function renderPage() {
+  const seq = ++viewer.seq, doc = viewer.doc;
+  const page = await doc.getPage(viewer.page);
+  if (seq !== viewer.seq) return;
+  const base = page.getViewport({ scale: 1 });
+  const avail = Math.min($('#vscroll').clientWidth - 32, 1000);
+  const scale = (avail / base.width) * viewer.zoom;
+  const vp = page.getViewport({ scale }), dpr = window.devicePixelRatio || 1;
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.floor(vp.width * dpr); canvas.height = Math.floor(vp.height * dpr);
+  canvas.style.width = Math.floor(vp.width) + 'px'; canvas.style.height = Math.floor(vp.height) + 'px';
+  try { viewer.task?.cancel(); } catch {}
+  const task = viewer.task = page.render({ canvasContext: canvas.getContext('2d'), viewport: vp, transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null });
+  try { await task.promise; } catch (e) { if (e?.name === 'RenderingCancelledException') return; console.error(e); }
+  if (seq !== viewer.seq) return;
+  const box = $('#pagebox');
+  box.innerHTML = ''; box.style.width = Math.floor(vp.width) + 'px'; box.style.height = Math.floor(vp.height) + 'px';
+  box.append(canvas);
+  const tl = document.createElement('div'); tl.className = 'textLayer'; tl.style.setProperty('--scale-factor', scale);
+  box.append(tl);
+  $('#vscroll').scrollTop = 0;
+  try {
+    const tc = await page.getTextContent();
+    if (seq !== viewer.seq) return;
+    await pdfjsLib.renderTextLayer({ textContentSource: tc, container: tl, viewport: vp }).promise;
+    const words = [...new Set(viewer.terms.flatMap(t => [t, ...t.split(' ')]).map(squash).filter(w => w.length > 2))];
+    let firstHit = null;
+    if (words.length) $$('span', tl).forEach(sp => {
+      const s = squash(sp.textContent);
+      if (words.some(w => s.includes(w))) { sp.classList.add('hl'); firstHit ??= sp; }
+    });
+    if (firstHit) { const r = firstHit.offsetTop; $('#vscroll').scrollTop = Math.max(0, r - 120); }
+  } catch (e) { console.warn('text layer', e); }
+}
+function findInBook(dir) {
+  const terms = parseQuery($('#v-find').value);
+  if (!terms.length) return;
+  const L = lowers[viewer.bookId];
+  if (!L) { $('#v-fstat').textContent = 'not indexed'; return; }
+  viewer.terms = terms;
+  const pages = [];
+  const sq = terms.map(squash);
+  L.forEach((t, i) => { if (sq.every(w => t.includes(w))) pages.push(i + 1); });
+  if (!pages.length) { $('#v-fstat').textContent = 'no matches'; return; }
+  let target = dir > 0 ? pages.find(p => p > viewer.page) ?? pages[0] : [...pages].reverse().find(p => p < viewer.page) ?? pages[pages.length - 1];
+  $('#v-fstat').textContent = `${pages.indexOf(target) + 1} of ${pages.length} pages`;
+  goPage(target);
+}
+$('#v-close').onclick = () => closeViewer(false);
+$('#v-prev').onclick = () => goPage(viewer.page - 1);
+$('#v-next').onclick = () => goPage(viewer.page + 1);
+$('#v-page').onchange = e => goPage(+e.target.value);
+$('#v-zin').onclick = () => { viewer.zoom = Math.min(4, viewer.zoom * 1.2); renderPage(); };
+$('#v-zout').onclick = () => { viewer.zoom = Math.max(0.3, viewer.zoom / 1.2); renderPage(); };
+$('#v-fnext').onclick = () => findInBook(1);
+$('#v-fprev').onclick = () => findInBook(-1);
+$('#v-find').onkeydown = e => { if (e.key === 'Enter') findInBook(e.shiftKey ? -1 : 1); };
+document.addEventListener('keydown', e => {
+  if (!$('#viewer').classList.contains('open')) return;
+  if (e.key === 'Escape') closeViewer(false);
+  if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if (e.key === 'ArrowRight' || e.key === 'PageDown') goPage(viewer.page + 1);
+  if (e.key === 'ArrowLeft' || e.key === 'PageUp') goPage(viewer.page - 1);
+});
+let resizeT; window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if ($('#viewer').classList.contains('open')) renderPage(); }, 200); });
+
+/* ---------- boot ---------- */
+(async () => {
+  showTab(store.get('dd.tab', 'dice'));
+  try {
+    await DB.open();
+    books = (await DB.all('books')).sort((a, b) => a.added - b.added);
+    for (const b of books) if (b.indexed) { const t = await DB.get('texts', b.id); if (t) { texts[b.id] = t; lowers[b.id] = t.map(squash); } else b.indexed = false; }
+  } catch (err) { console.error(err); toastMsg('Book storage is unavailable in this browser window.'); }
+  renderBooks(); runSearch();
+})();
+</script>
+</body>
+</html>

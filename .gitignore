@@ -1,0 +1,8 @@
+# Rulebooks and character sheets stay private: never commit PDFs
+*.pdf
+.DS_Store
+__pycache__/
+
+# The party stays local: character data, portraits, and the party build to send friends
+app/party/
+dnd-helper-party.html
